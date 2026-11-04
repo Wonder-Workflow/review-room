@@ -1,0 +1,11 @@
+{
+  "test_data": true,
+  "people": [
+    { "name": "Sally", "role": "server", "on_case_shift": true },
+    { "name": "David", "role": "server", "on_case_shift": true },
+    { "name": "Cindi", "role": "line cook", "on_case_shift": true },
+    { "name": "Troy", "role": "shift lead", "on_case_shift": true },
+    { "name": "Mina", "role": "server", "on_case_shift": false },
+    { "name": "Omar", "role": "dishwasher", "on_case_shift": false }
+  ]
+}

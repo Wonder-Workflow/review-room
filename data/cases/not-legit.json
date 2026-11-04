@@ -1,0 +1,14 @@
+{
+  "test_data": true,
+  "case": "not-legit",
+  "review_id": "rev-not-legit",
+  "stars": 1,
+  "reviewer": "Alex",
+  "service_date": "2026-04-11",
+  "shift": "close",
+  "visit_local": "2026-04-11T22:40:00",
+  "visit_stated": "10:40 PM",
+  "posted_at": "2026-04-12T15:12:00Z",
+  "dish": "lobster thermidor",
+  "comment": "We walked in at 10:40 PM on April 11 and ordered the lobster thermidor. The kitchen acted like they had never heard of it, and the meal never showed up. One star."
+}

@@ -1,0 +1,19 @@
+{
+  "test_data": true,
+  "name": "Harbor Lane Kitchen (TEST)",
+  "timezone": "America/Denver",
+  "hours": {
+    "open": "11:00",
+    "kitchen_close": "22:00",
+    "kitchen_close_label": "10:00 PM",
+    "restaurant_close": "23:00",
+    "restaurant_close_label": "11:00 PM"
+  },
+  "menu": [
+    { "name": "House burger", "price": 14 },
+    { "name": "Roasted chicken", "price": 19 },
+    { "name": "Mushroom pasta", "price": 16 },
+    { "name": "Greens salad", "price": 11 },
+    { "name": "Fish tacos", "price": 17 }
+  ]
+}

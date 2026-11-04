@@ -1,0 +1,8 @@
+# TEST DATA
+date,shift,role,name,start,end
+2026-04-11,close,server,Sally,16:00,23:00
+2026-04-11,close,server,David,16:00,23:00
+2026-04-11,close,line cook,Cindi,16:00,23:00
+2026-04-11,close,shift lead,Troy,16:00,23:00
+2026-04-11,lunch,server,Mina,11:00,16:00
+2026-04-11,lunch,dishwasher,Omar,11:00,16:00

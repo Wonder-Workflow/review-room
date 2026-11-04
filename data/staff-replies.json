@@ -1,0 +1,17 @@
+{
+  "test_data": true,
+  "replies": {
+    "not-legit": {
+      "Sally": "Kitchen closed at 10. We don't serve lobster.",
+      "David": "I was on the floor until close. Nobody ordered lobster. The kitchen was done at 10.",
+      "Cindi": "I ran the line. We stopped cooking at 10, and lobster is not on our menu.",
+      "Troy": "I closed. There was no lobster ticket, and the kitchen shut at 10."
+    },
+    "legit": {
+      "Sally": "Table 12 waited about 40 minutes. We were buried in the dining room.",
+      "David": "I remember table 12. They waited about 40 minutes before we got to them.",
+      "Cindi": "The line was backed up. Table 12's ticket sat about 40 minutes.",
+      "Troy": "Yes, table 12 waited about 40 minutes on that close."
+    }
+  }
+}

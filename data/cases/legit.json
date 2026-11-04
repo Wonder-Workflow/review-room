@@ -1,0 +1,15 @@
+{
+  "test_data": true,
+  "case": "legit",
+  "review_id": "rev-legit",
+  "stars": 2,
+  "reviewer": "Jordan",
+  "service_date": "2026-04-11",
+  "shift": "close",
+  "visit_local": "2026-04-11T19:15:00",
+  "visit_stated": "7:15 PM",
+  "posted_at": "2026-04-12T15:40:00Z",
+  "table": 12,
+  "wait_minutes": 40,
+  "comment": "We were seated at table 12 at 7:15 PM on April 11 and waited 40 minutes before anyone took our order. The room was packed. The food was fine once it came, but that wait was too long."
+}
