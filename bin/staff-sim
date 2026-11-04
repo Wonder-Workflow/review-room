@@ -1,0 +1,46 @@
+#!/usr/bin/env node
+import { parseArgs, rejectUnknown } from '../src/args.js';
+import { readJson } from '../src/cases.js';
+
+const PREFIX = 'simulated staff reply (TEST):';
+
+async function main() {
+  const args = parseArgs(process.argv.slice(2));
+  rejectUnknown(args, new Set(['case', 'name', 'channel']));
+  if (!args.case || !args.name || !args.channel) {
+    throw new Error('usage: staff-sim --case not-legit|legit --name Sally --channel CHANNEL_ID');
+  }
+  const data = await readJson('data/staff-replies.json');
+  const canned = data.replies?.[args.case]?.[args.name];
+  if (typeof canned !== 'string' || canned.length === 0) {
+    throw new Error(`no canned reply for ${args.name} on ${args.case}`);
+  }
+  const payload = {
+    channel_id: args.channel,
+    message: `${PREFIX} ${canned}`,
+  };
+  const base = process.env.MATTERMOST_URL;
+  if (!base) {
+    console.log(JSON.stringify(payload, null, 2));
+    return;
+  }
+  const envName = `MM_TOKEN_${args.name.toUpperCase()}`;
+  const token = process.env[envName];
+  if (!token) throw new Error(`missing ${envName}`);
+  const url = new URL('/api/v4/posts', base.endsWith('/') ? base : `${base}/`);
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(9000),
+  });
+  if (!res.ok) throw new Error(`Mattermost status ${res.status}`);
+}
+
+main().catch((err) => {
+  console.error(err.message);
+  process.exit(1);
+});

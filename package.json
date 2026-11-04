@@ -1,0 +1,14 @@
+{
+  "name": "review-room",
+  "private": true,
+  "description": "Fake restaurant reviews and a localhost stand-in for Google review methods. TEST DATA.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test"
+  }
+}

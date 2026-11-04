@@ -1,0 +1,53 @@
+#!/usr/bin/env node
+import { rejectUnknown, parseArgs } from '../src/args.js';
+import { loadCase } from '../src/cases.js';
+import { STAR_NUMBER, starsToEnum, upsertReview } from '../src/store.js';
+
+const USERNAME = 'Fake Google feed (TEST)';
+
+async function main() {
+  const args = parseArgs(process.argv.slice(2));
+  rejectUnknown(args, new Set(['case', 'stars']));
+  if (!args.case) throw new Error('missing --case');
+  const caseData = await loadCase(args.case);
+  const stars = args.stars === undefined ? caseData.stars : args.stars;
+  const starRating = starsToEnum(stars);
+  const review = {
+    test_data: true,
+    name: `accounts/test/locations/test/reviews/${caseData.review_id}`,
+    reviewId: caseData.review_id,
+    reviewer: { displayName: caseData.reviewer, isAnonymous: false },
+    starRating,
+    comment: caseData.comment,
+    createTime: caseData.posted_at,
+    updateTime: new Date().toISOString(),
+  };
+  await upsertReview(review);
+  const payload = {
+    username: USERNAME,
+    text: [
+      '@watcher',
+      `Stars: ${STAR_NUMBER[starRating]}`,
+      review.comment,
+      `Review id: ${review.reviewId}`,
+      'TEST DATA',
+    ].join('\n'),
+  };
+  const webhook = process.env.MATTERMOST_WEBHOOK_URL;
+  if (!webhook) {
+    console.log(JSON.stringify(payload, null, 2));
+    return;
+  }
+  const res = await fetch(webhook, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(9000),
+  });
+  if (!res.ok) throw new Error(`webhook status ${res.status}`);
+}
+
+main().catch((err) => {
+  console.error(err.message);
+  process.exit(1);
+});
