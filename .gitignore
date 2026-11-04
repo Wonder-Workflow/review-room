@@ -1,0 +1,6 @@
+node_modules/
+.switch/
+*.env
+.env*
+auth.json
+data/state/
