@@ -46,7 +46,7 @@ curl -s -X PUT http://127.0.0.1:8787/v4/accounts/test/locations/test/reviews/rev
 
 curl -s -X POST http://127.0.0.1:8787/fake/reviews/rev-not-legit/report \
   -H 'content-type: application/json' \
-  -d '{"reason":"Content that is not based on a real experience","policy_quote":"Content that is not based on a real experience or does not accurately represent the location or product in question.","evidence_summary":"Kitchen closes at 10 PM. The menu has no lobster dish. The review places the visit at 10:40 PM."}'
+  -d '{"reason":"Content that is not based on a real experience","policy_quote":"Content that is not based on a real experience or does not accurately represent the location or product in question.","evidence_summary":"Kitchen closes at 10 PM. The menu has no lobster dish. The review places the visit at 10:40 PM. Google decides. Removal is not promised."}'
 ```
 
 Read the review back. The reply is on the review, and `report.status` is `Decision pending (simulated)`.
@@ -76,16 +76,24 @@ From the repo root, create the test users, the `reviews-inbox` channel, and the 
 bin/setup-mattermost-test --container switchdash-local-mattermost-mattermost-1 --team review-room-test --url http://127.0.0.1:45065
 ```
 
-Those three flags are optional. The values shown are the defaults. The script talks to Mattermost with `docker exec <container> mmctl --local`. It creates `manager-test`, `sally-test`, `david-test`, `cindi-test`, and `troy-test`, all with `@example.test` mail. `manager-test` is a system admin. Running the script again leaves existing users, passwords, tokens, and the webhook in place. It fills a missing token without rotating the others.
+Those three flags are optional. The values shown are the defaults. The script talks to Mattermost with `docker exec <container> mmctl --local`. It creates `manager-test`, `sally-test`, `david-test`, `cindi-test`, and `troy-test`, all with `@example.test` mail. `manager-test` is a system admin for setup only. It is not the linked manager, and on this demo it is unlinked. Do not use it for confirms, a verdict, or `approve`. Running the script again leaves existing users, passwords, tokens, and the webhook in place. It fills a missing token without rotating the others.
 
 Generated passwords and tokens are written to `.env` in the repo root. That file is gitignored. The script does not print them. The Node scripts load `.env` when the variable is not already set. A shell variable wins over the file.
 
 `bin/setup-mattermost-test` writes `MM_TEAM` to `.env`. `bin/staff-sim` and `bin/export-transcript` read that file through `src/dotenv.js` when the shell has not set `MM_TEAM`.
 
-`MM_TEAM` must equal the team name you entered in Switch's Mattermost connection. Agents see rooms only on that team. If you ran `bin/setup-mattermost-test` as written, that name is `review-room-test`, and the script already wrote it to `.env`. Set the name once in `.env`.
+`MM_TEAM` must equal the team name in Switch's Mattermost connection. Agents see rooms only on that team.
+
+A new Mattermost from the setup script as written uses team `review-room-test`. The script writes that name to `.env`.
 
 ```bash
 MM_TEAM=review-room-test
+```
+
+This existing demo connects Switch to team `switch`. For that demo, set the one line in `.env` to:
+
+```bash
+MM_TEAM=switch
 ```
 
 `MATTERMOST_URL` must be `http://127.0.0.1` or `http://localhost` with a port. The script refuses any other host.
@@ -102,7 +110,7 @@ In Switch Console, register three agents. Paste each file into Agent instruction
 
 Turn Auto mode on for all three. Leave Bypass off. Check the Drafter model is grok-4.7 before every run. On a Drafter card, choose Allow once.
 
-Mattermost usernames are the `*-test` accounts from the setup script. The room alias for the owner is `@manager`.
+Staff usernames are `sally-test`, `david-test`, `cindi-test`, and `troy-test`. The room alias for the owner is `@manager`. Post confirms, the verdict, and `approve` from the Mattermost account linked to the Switch user who owns the agents. Linking means Switch has claimed that Mattermost user for the owner. On this demo the linked account is `user`. On a fresh install, link your own account. Its username does not have to be `user`. `manager-test` is not an alternative manager.
 
 ## Set up the rooms
 
@@ -114,7 +122,7 @@ Staff rooms are private and named `review-<id>-<name>` with the staff name in lo
 
 ## Run the not-legit case
 
-Do every manager action in these steps from the Mattermost account linked to your Switch user, because the Investigator refuses unclaimed users.
+Do every manager action in these steps from the Mattermost account linked to your Switch user. On this demo, post them as `user`. The Investigator refuses unclaimed users.
 
 1. `npm run reset`
 2. `npm start`
