@@ -33,6 +33,18 @@ Git markdown on Nov 5 is `README.md`, this file, and `docs/agents/` (`watcher-in
 
 The window still closes Sat Nov 7 at 12:29 America/Edmonton. That time is buffer only.
 
+## Nov 5 afternoon outage
+
+Clock times below are as reported for that afternoon. This docs pass did not open the host.
+
+Reported. Independent QA reported the legit run at 15:03 and the not-legit run at 15:10 failed. The replies said the machine was offline.
+
+Verified. Console and the controller were absent. They were restored at 15:15. A screenshot at 15:16 shows green indicators for Watcher, Investigator, and Drafter.
+
+Not certified. An independent full rerun after the restore is still pending. The morning passes do not certify present end-to-end readiness.
+
+Blocked. A browser check of the linked manager account did not run. Documented project files contain no password for that account. No credential change, reset, or session edit was performed.
+
 ## Doc findings
 
 The four README and plan findings from the Nov 5 QA are fixed in this follow-up. They are not open.
