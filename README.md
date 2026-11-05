@@ -80,6 +80,14 @@ Those three flags are optional. The values shown are the defaults. The script ta
 
 Generated passwords and tokens are written to `.env` in the repo root. That file is gitignored. The script does not print them. The Node scripts load `.env` when the variable is not already set. A shell variable wins over the file.
 
+`bin/setup-mattermost-test` writes `MM_TEAM` to `.env`. `bin/staff-sim` and `bin/export-transcript` read that file through `src/dotenv.js` when the shell has not set `MM_TEAM`.
+
+`MM_TEAM` must equal the team name you entered in Switch's Mattermost connection. Agents see rooms only on that team. If you ran `bin/setup-mattermost-test` as written, that name is `review-room-test`, and the script already wrote it to `.env`. Set the name once in `.env`.
+
+```bash
+MM_TEAM=review-room-test
+```
+
 `MATTERMOST_URL` must be `http://127.0.0.1` or `http://localhost` with a port. The script refuses any other host.
 
 ## Register the three agents
@@ -94,8 +102,6 @@ In Switch Console, register three agents. Paste each file into Agent instruction
 
 Turn Auto mode on for all three. Leave Bypass off. Check the Drafter model is grok-4.7 before every run. On a Drafter card, choose Allow once.
 
-The manager's Mattermost user (`manager-test`) has to be linked to the Switch user that owns the agents.
-
 Mattermost usernames are the `*-test` accounts from the setup script. The room alias for the owner is `@manager`.
 
 ## Set up the rooms
@@ -108,6 +114,8 @@ Staff rooms are private and named `review-<id>-<name>` with the staff name in lo
 
 ## Run the not-legit case
 
+Do every manager action in these steps from the Mattermost account linked to your Switch user, because the Investigator refuses unclaimed users.
+
 1. `npm run reset`
 2. `npm start`
 3. `node bin/inject-review --case not-legit`
@@ -117,9 +125,9 @@ Staff rooms are private and named `review-<id>-<name>` with the staff name in lo
 5. Investigator reads `data/schedule.csv` and posts the close shift (Sally, David, Cindi, Troy), then opens the four staff rooms.
 6. `node bin/staff-sim --all --case not-legit`
 
-   This looks up `review-rev-not-legit-sally` and the three other staff rooms on team `review-room-test`. Set `MM_TEAM` to use another team. Each post uses that person's token, `MM_TOKEN_SALLY` and the matching names. If any room is missing, the command posts nothing and exits 1.
-7. In the case room, as the manager, send `verdict: not legit`.
-8. Drafter posts the reply draft and the report text, including `Removal is not promised`. As the manager, send `approve`. Choose Allow once on the card.
+   This looks up `review-rev-not-legit-sally` and the three other staff rooms on the team in `MM_TEAM`. Each post uses that person's token, `MM_TOKEN_SALLY` and the matching names. If any room is missing, the command posts nothing and exits 1.
+7. Send `verdict: not legit`.
+8. Drafter posts the reply draft and the report text, including `Removal is not promised`. Send `approve`. Choose Allow once on the card.
 9. Confirm the fake service. `report.status` is `Decision pending (simulated)`.
 
 ```bash
@@ -130,7 +138,7 @@ curl -s http://127.0.0.1:8787/v4/accounts/test/locations/test/reviews/rev-not-le
 
 Repeat the not-legit steps with `--case legit`. The review id is `rev-legit`. Staff rooms are `review-rev-legit-sally` and the same pattern for David, Cindi, and Troy.
 
-The manager sends `verdict: legit`, then `approve`. Drafter posts a short apology and no report. The reply must not offer anything, and it must not name staff. A report request for this case is a failed run.
+Send `verdict: legit`, then `approve`. Drafter posts a short apology and no report. The reply must not offer anything, and it must not name staff. A report request for this case is a failed run.
 
 ```bash
 curl -s http://127.0.0.1:8787/v4/accounts/test/locations/test/reviews/rev-legit
