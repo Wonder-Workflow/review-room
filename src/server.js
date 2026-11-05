@@ -7,6 +7,7 @@ import {
   STAR_NUMBER,
   clearReply,
   ensureStateDir,
+  getReport,
   getReview,
   listReports,
   listReviews,
@@ -234,6 +235,11 @@ async function route(req, res) {
   if (reportMatch) {
     const id = parseId(reportMatch[1]);
     if (!id) return send(res, 400, { error: 'bad review id' });
+    if (req.method === 'GET') {
+      const report = await getReport(id);
+      if (!report) return send(res, 404, { error: 'report not found' });
+      return send(res, 200, report);
+    }
     if (req.method !== 'POST') return send(res, 405, { error: 'method not allowed' });
     const body = await readJsonBody(req);
     const report = await setReport(id, {

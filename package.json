@@ -9,6 +9,7 @@
   },
   "scripts": {
     "start": "node src/server.js",
+    "reset": "node bin/reset",
     "test": "node --test"
   }
 }

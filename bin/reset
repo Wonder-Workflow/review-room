@@ -1,0 +1,15 @@
+#!/usr/bin/env node
+import { parseArgs, rejectUnknown } from '../src/args.js';
+import { clearRuntimeState } from '../src/store.js';
+
+async function main() {
+  const args = parseArgs(process.argv.slice(2));
+  rejectUnknown(args, new Set());
+  await clearRuntimeState();
+  console.log('cleared runtime state');
+}
+
+main().catch((err) => {
+  console.error(err.message);
+  process.exit(1);
+});
