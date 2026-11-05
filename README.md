@@ -114,6 +114,8 @@ Staff rooms are private and named `review-<id>-<name>` with the staff name in lo
 
 ## Run the not-legit case
 
+Do every manager action in these steps from the Mattermost account linked to your Switch user, because the Investigator refuses unclaimed users.
+
 1. `npm run reset`
 2. `npm start`
 3. `node bin/inject-review --case not-legit`
@@ -124,8 +126,8 @@ Staff rooms are private and named `review-<id>-<name>` with the staff name in lo
 6. `node bin/staff-sim --all --case not-legit`
 
    This looks up `review-rev-not-legit-sally` and the three other staff rooms on the team in `MM_TEAM`. Each post uses that person's token, `MM_TOKEN_SALLY` and the matching names. If any room is missing, the command posts nothing and exits 1.
-7. Post every manager action from the Mattermost account linked to your Switch user. That includes confirms, `verdict: legit` or `verdict: not legit`, and `approve`. The Investigator refuses a Mattermost user that no Switch user has claimed. In the case room, from that account, send `verdict: not legit`.
-8. Drafter posts the reply draft and the report text, including `Removal is not promised`. From that same account, send `approve`. Choose Allow once on the card.
+7. Send `verdict: not legit`.
+8. Drafter posts the reply draft and the report text, including `Removal is not promised`. Send `approve`. Choose Allow once on the card.
 9. Confirm the fake service. `report.status` is `Decision pending (simulated)`.
 
 ```bash
@@ -136,7 +138,7 @@ curl -s http://127.0.0.1:8787/v4/accounts/test/locations/test/reviews/rev-not-le
 
 Repeat the not-legit steps with `--case legit`. The review id is `rev-legit`. Staff rooms are `review-rev-legit-sally` and the same pattern for David, Cindi, and Troy.
 
-From that same Mattermost account, send `verdict: legit`, then `approve`. Drafter posts a short apology and no report. The reply must not offer anything, and it must not name staff. A report request for this case is a failed run.
+Send `verdict: legit`, then `approve`. Drafter posts a short apology and no report. The reply must not offer anything, and it must not name staff. A report request for this case is a failed run.
 
 ```bash
 curl -s http://127.0.0.1:8787/v4/accounts/test/locations/test/reviews/rev-legit
