@@ -97,6 +97,9 @@ test('review methods, reply, and report', async () => {
     const withReply = await readJson(`${base}/v4/accounts/test/locations/test/reviews/rev-not-legit`);
     assert.equal(withReply.body.reviewReply.comment, reply.body.comment);
 
+    const noReport = await readJson(`${base}/fake/reviews/rev-not-legit/report`);
+    assert.equal(noReport.res.status, 404);
+
     const report = await readJson(`${base}/fake/reviews/rev-not-legit/report`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -111,6 +114,14 @@ test('review methods, reply, and report', async () => {
     assert.equal(report.body.status, 'Decision pending (simulated)');
     assert.equal(JSON.stringify(report.body).toLowerCase().includes('removed'), false);
     assert.equal(report.body.reason, 'Content that is not based on a real experience');
+
+    const withReport = await readJson(`${base}/v4/accounts/test/locations/test/reviews/rev-not-legit`);
+    assert.equal(withReport.body.report.status, 'Decision pending (simulated)');
+    assert.equal(withReport.body.report.reason, report.body.reason);
+
+    const reportGet = await readJson(`${base}/fake/reviews/rev-not-legit/report`);
+    assert.equal(reportGet.res.status, 200);
+    assert.equal(reportGet.body.status, 'Decision pending (simulated)');
 
     const page = await fetch(`${base}/`);
     const after = await page.text();

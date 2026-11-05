@@ -1,4 +1,4 @@
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -89,6 +89,7 @@ function compose(state, id) {
   if (!review) return null;
   const copy = { ...review };
   if (state.replies[id]) copy.reviewReply = state.replies[id];
+  if (state.reports[id]) copy.report = state.reports[id];
   return copy;
 }
 
@@ -105,6 +106,16 @@ export async function getReview(id) {
 export async function listReports() {
   const state = await loadState();
   return Object.keys(state.reports).sort().map((id) => state.reports[id]);
+}
+
+export async function getReport(id) {
+  const state = await loadState();
+  return state.reports[id] || null;
+}
+
+export async function clearRuntimeState(dir = resolveStateDir()) {
+  await mkdir(dir, { recursive: true });
+  await Promise.all(Object.values(DOCS).map((name) => rm(path.join(dir, name), { force: true })));
 }
 
 export async function upsertReview(review) {

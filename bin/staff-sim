@@ -1,43 +1,57 @@
 #!/usr/bin/env node
 import { parseArgs, rejectUnknown } from '../src/args.js';
-import { readJson } from '../src/cases.js';
+import { loadCase, readJson } from '../src/cases.js';
+import { loadDotEnv } from '../src/dotenv.js';
+import { createPost, findChannelId } from '../src/mattermost.js';
+import { staffRoomName } from '../src/rooms.js';
 
 const PREFIX = 'simulated staff reply (TEST):';
 
-async function main() {
-  const args = parseArgs(process.argv.slice(2));
-  rejectUnknown(args, new Set(['case', 'name', 'channel']));
-  if (!args.case || !args.name || !args.channel) {
-    throw new Error('usage: staff-sim --case not-legit|legit --name Sally --channel CHANNEL_ID');
-  }
-  const data = await readJson('data/staff-replies.json');
-  const canned = data.replies?.[args.case]?.[args.name];
-  if (typeof canned !== 'string' || canned.length === 0) {
-    throw new Error(`no canned reply for ${args.name} on ${args.case}`);
-  }
-  const payload = {
-    channel_id: args.channel,
-    message: `${PREFIX} ${canned}`,
-  };
-  const base = process.env.MATTERMOST_URL;
-  if (!base) {
-    console.log(JSON.stringify(payload, null, 2));
-    return;
-  }
-  const envName = `MM_TOKEN_${args.name.toUpperCase()}`;
+function tokenFor(name) {
+  const envName = `MM_TOKEN_${name.toUpperCase()}`;
   const token = process.env[envName];
   if (!token) throw new Error(`missing ${envName}`);
-  const url = new URL('/api/v4/posts', base.endsWith('/') ? base : `${base}/`);
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(payload),
-    signal: AbortSignal.timeout(9000),
-  });
-  if (!res.ok) throw new Error(`Mattermost status ${res.status}`);
+  return token;
+}
+
+async function messageFor(replies, caseName, name) {
+  const canned = replies.replies?.[caseName]?.[name];
+  if (typeof canned !== 'string' || canned.length === 0) {
+    throw new Error(`no canned reply for ${name} on ${caseName}`);
+  }
+  return `${PREFIX} ${canned}`;
+}
+
+async function main() {
+  await loadDotEnv();
+  const args = parseArgs(process.argv.slice(2), { flags: new Set(['all']) });
+  rejectUnknown(args, new Set(['case', 'name', 'channel', 'all']));
+  if (!args.case) throw new Error('missing --case');
+  if (args.all && (args.name || args.channel)) {
+    throw new Error('--all does not take --name or --channel');
+  }
+  if (!args.all && !args.name) throw new Error('missing --name');
+
+  const replies = await readJson('data/staff-replies.json');
+  const names = args.all ? Object.keys(replies.replies?.[args.case] || {}) : [args.name];
+  if (names.length === 0) throw new Error(`no canned replies for ${args.case}`);
+  const caseData = args.all || !args.channel ? await loadCase(args.case) : null;
+  const base = process.env.MATTERMOST_URL;
+  const team = process.env.MM_TEAM || 'review-room-test';
+  const jobs = [];
+  for (const name of names) {
+    const message = await messageFor(replies, args.case, name);
+    let channelId = args.channel || staffRoomName(caseData.review_id, name);
+    if (base && !args.channel) channelId = await findChannelId(base, tokenFor(name), team, channelId);
+    jobs.push({ name, message, channelId });
+  }
+
+  if (!base) {
+    const printed = jobs.map((job) => ({ channel_id: job.channelId, message: job.message }));
+    console.log(JSON.stringify(args.all ? printed : printed[0], null, 2));
+    return;
+  }
+  for (const job of jobs) await createPost(base, tokenFor(job.name), job.channelId, job.message);
 }
 
 main().catch((err) => {

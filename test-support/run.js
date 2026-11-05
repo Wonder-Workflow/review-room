@@ -3,9 +3,13 @@ import { repoRoot } from '../src/store.js';
 
 export function runNode(args, env, timeoutMs = 10000) {
   return new Promise((resolve, reject) => {
+    const childEnv = { ...process.env, ...env };
+    for (const [key, value] of Object.entries(childEnv)) {
+      if (value == null) delete childEnv[key];
+    }
     const child = spawn(process.execPath, args, {
       cwd: repoRoot(),
-      env: { ...process.env, ...env },
+      env: childEnv,
     });
     let stdout = '';
     let stderr = '';

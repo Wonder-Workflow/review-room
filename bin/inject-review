@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 import { rejectUnknown, parseArgs } from '../src/args.js';
 import { loadCase } from '../src/cases.js';
+import { loadDotEnv } from '../src/dotenv.js';
 import { STAR_NUMBER, starsToEnum, upsertReview } from '../src/store.js';
 
 const USERNAME = 'Fake Google feed (TEST)';
 
 async function main() {
+  await loadDotEnv();
   const args = parseArgs(process.argv.slice(2));
   rejectUnknown(args, new Set(['case', 'stars']));
   if (!args.case) throw new Error('missing --case');

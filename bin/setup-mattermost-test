@@ -1,0 +1,166 @@
+#!/usr/bin/env bash
+set -eu
+
+CONTAINER="${MM_CONTAINER:-switchdash-local-mattermost-mattermost-1}"
+TEAM="${MM_TEAM:-review-room-test}"
+MM_URL="${MATTERMOST_URL:-http://127.0.0.1:45065}"
+ENV_FILE=".env"
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --container)
+      [ $# -ge 2 ] || { echo "missing value for --container" >&2; exit 1; }
+      CONTAINER="$2"
+      shift 2
+      ;;
+    --team)
+      [ $# -ge 2 ] || { echo "missing value for --team" >&2; exit 1; }
+      TEAM="$2"
+      shift 2
+      ;;
+    --url)
+      [ $# -ge 2 ] || { echo "missing value for --url" >&2; exit 1; }
+      MM_URL="$2"
+      shift 2
+      ;;
+    --env-file)
+      [ $# -ge 2 ] || { echo "missing value for --env-file" >&2; exit 1; }
+      ENV_FILE="$2"
+      shift 2
+      ;;
+    *)
+      echo "unknown argument $1" >&2
+      exit 1
+      ;;
+  esac
+done
+
+case "$CONTAINER" in
+  *[!A-Za-z0-9_.-]*) echo "bad container name" >&2; exit 1 ;;
+esac
+case "$TEAM" in
+  *[!a-z0-9-]*) echo "bad team name" >&2; exit 1 ;;
+esac
+case "$MM_URL" in
+  http://127.0.0.1:[0-9]*|http://localhost:[0-9]*) ;;
+  *) echo "url must be http://127.0.0.1 or http://localhost with a port" >&2; exit 1 ;;
+esac
+
+if [ -n "${MMCTL:-}" ]; then
+  read -r -a MM <<<"$MMCTL"
+else
+  MM=(docker exec "$CONTAINER" mmctl --local)
+fi
+
+mm() {
+  "${MM[@]}" "$@"
+}
+
+get() {
+  [ -f "$ENV_FILE" ] || return 0
+  local line
+  line=$(grep -m1 "^$1=" "$ENV_FILE" || true)
+  printf '%s' "${line#"$1"=}"
+}
+
+put() {
+  local tmp
+  tmp=$(mktemp "${ENV_FILE}.XXXXXX")
+  if [ -f "$ENV_FILE" ]; then
+    grep -v "^$1=" "$ENV_FILE" > "$tmp" || true
+  fi
+  printf '%s=%s\n' "$1" "$2" >> "$tmp"
+  mv "$tmp" "$ENV_FILE"
+  chmod 600 "$ENV_FILE"
+}
+
+pw() {
+  node -e 'const c=require("crypto"); const a="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; const b=c.randomBytes(20); let s="Aa1!"; for (const x of b) s+=a[x%a.length]; process.stdout.write(s);'
+}
+
+extract_id() {
+  grep -oE '[a-z0-9]{26}' | head -n 1 || true
+}
+
+title_name() {
+  printf '%s' "$1" | awk '{ print toupper(substr($0,1,1)) substr($0,2) }'
+}
+
+for key in \
+  ServiceSettings.EnableBotAccountCreation \
+  ServiceSettings.EnableUserAccessTokens \
+  ServiceSettings.EnableIncomingWebhooks \
+  ServiceSettings.EnablePostUsernameOverride
+do
+  mm config set "$key" true >/dev/null
+  echo "set ${key}"
+done
+
+if ! mm team list | grep -Eq "^${TEAM}([[:space:]]|$)"; then
+  mm team create --name "$TEAM" --display-name "Review Room (TEST)" >/dev/null
+  echo "created team ${TEAM}"
+else
+  echo "exists team ${TEAM}"
+fi
+
+for u in manager sally david cindi troy; do
+  user="${u}-test"
+  upper=$(printf '%s' "$u" | tr '[:lower:]' '[:upper:]')
+  put "MM_USER_${upper}" "$user"
+  if ! mm user search "$user" | grep -q "username: ${user}"; then
+    pass=$(pw)
+    put "MM_PASS_${upper}" "$pass"
+    if [ "$u" = manager ]; then
+      mm user create \
+        --username "$user" \
+        --email "${user}@example.test" \
+        --password "$pass" \
+        --nickname "Manager (TEST)" \
+        --system-admin >/dev/null
+    else
+      mm user create \
+        --username "$user" \
+        --email "${user}@example.test" \
+        --password "$pass" \
+        --nickname "$(title_name "$u") (TEST staff)" >/dev/null
+    fi
+    echo "created ${user}"
+  else
+    echo "exists ${user}"
+  fi
+  mm team users add "$TEAM" "$user" >/dev/null 2>&1 || true
+done
+
+if ! mm channel list "$TEAM" | grep -Eq '^reviews-inbox([[:space:]]|$)'; then
+  mm channel create --team "$TEAM" --name reviews-inbox --display-name "reviews-inbox (TEST)" >/dev/null
+  echo "created reviews-inbox"
+else
+  echo "exists reviews-inbox"
+fi
+
+put MM_CONTAINER "$CONTAINER"
+put MM_TEAM "$TEAM"
+put MATTERMOST_URL "$MM_URL"
+
+if [ -z "$(get MATTERMOST_WEBHOOK_URL)" ]; then
+  hook_id=$(mm webhook create-incoming \
+    --channel "${TEAM}:reviews-inbox" \
+    --user manager-test \
+    --display-name "Fake Google feed (TEST)" | extract_id)
+  [ -n "$hook_id" ] || { echo "no webhook id" >&2; exit 1; }
+  put MATTERMOST_WEBHOOK_URL "${MM_URL%/}/hooks/${hook_id}"
+  echo "wrote MATTERMOST_WEBHOOK_URL"
+fi
+
+for u in manager sally david cindi troy; do
+  upper=$(printf '%s' "$u" | tr '[:lower:]' '[:upper:]')
+  key="MM_TOKEN_${upper}"
+  if [ -z "$(get "$key")" ]; then
+    desc="staff-sim"
+    [ "$u" = manager ] && desc="export-transcript"
+    token=$(mm token generate "${u}-test" "$desc" | extract_id)
+    [ -n "$token" ] || { echo "no token for ${u}-test" >&2; exit 1; }
+    put "$key" "$token"
+    echo "wrote ${key}"
+  fi
+done

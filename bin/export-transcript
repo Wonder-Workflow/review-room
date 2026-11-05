@@ -1,0 +1,131 @@
+#!/usr/bin/env node
+import { mkdir, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { parseArgs, rejectUnknown } from '../src/args.js';
+import { readJson } from '../src/cases.js';
+import { loadDotEnv } from '../src/dotenv.js';
+import { findChannelId, listPosts, mmJson } from '../src/mattermost.js';
+import { caseRoomName, staffRoomName } from '../src/rooms.js';
+import { readServiceState } from '../src/service-state.js';
+import { REVIEW_ID, starLabel } from '../src/store.js';
+
+const CHANNEL_ID = /^[a-z0-9]{26}$/;
+
+function who(post) {
+  const override = post?.props?.override_username;
+  if (typeof override === 'string' && override.length > 0) return override;
+  if (typeof post?.user_id === 'string' && post.user_id.length > 0) return post.user_id;
+  return 'unknown';
+}
+
+function when(post) {
+  return typeof post?.create_at === 'number' ? new Date(post.create_at).toISOString() : '';
+}
+
+function oneLine(value) {
+  return String(value || '').replace(/\s+/g, ' ').trim();
+}
+
+async function targets(args) {
+  const list = [];
+  if (args.review) {
+    if (!REVIEW_ID.test(args.review)) throw new Error('bad review id');
+    list.push({ name: caseRoomName(args.review) });
+    const staff = await readJson('data/staff.json');
+    for (const person of staff.people) {
+      if (person.on_case_shift === true) list.push({ name: staffRoomName(args.review, person.name) });
+    }
+  }
+  for (const value of args.channel || []) {
+    if (CHANNEL_ID.test(value)) list.push({ id: value });
+    else list.push({ name: value });
+  }
+  if (list.length === 0) throw new Error('pass --review or --channel');
+  return list;
+}
+
+async function resolveChannel(base, token, team, target) {
+  if (target.id) {
+    try {
+      const info = await mmJson(base, token, `/api/v4/channels/${encodeURIComponent(target.id)}`);
+      const posts = await listPosts(base, token, target.id);
+      return { id: target.id, name: info?.name || target.id, missing: false, posts };
+    } catch (err) {
+      if (err.status === 404) return { id: target.id, name: target.id, missing: true, posts: [] };
+      throw err;
+    }
+  }
+  try {
+    const id = await findChannelId(base, token, team, target.name);
+    const posts = await listPosts(base, token, id);
+    return { id, name: target.name, missing: false, posts };
+  } catch (err) {
+    if (err.status === 404) return { name: target.name, missing: true, posts: [] };
+    throw err;
+  }
+}
+
+function markdown(doc) {
+  const lines = ['# Transcript (TEST DATA)', ''];
+  if (doc.review) lines.push(`Review id ${doc.review}.`, '');
+  for (const channel of doc.channels) {
+    lines.push(`## ${channel.name}`, '');
+    if (channel.missing) {
+      lines.push('No posts. The room was not found.', '');
+      continue;
+    }
+    if (channel.posts.length === 0) {
+      lines.push('No posts.', '');
+      continue;
+    }
+    for (const post of channel.posts) {
+      lines.push(`- ${when(post)} ${who(post)}. ${oneLine(post.message)}`);
+    }
+    lines.push('');
+  }
+  lines.push('## Fake service state', '');
+  const reviews = doc.state?.reviews || [];
+  if (reviews.length === 0) lines.push('No reviews in the local store.');
+  for (const review of reviews) {
+    const reply = review.reviewReply ? 'reply posted' : 'no reply';
+    const report = review.report?.status || 'no report';
+    lines.push(`- ${review.reviewId}. ${starLabel(review.starRating)}. ${reply}. ${report}.`);
+  }
+  lines.push('');
+  return `${lines.join('\n')}\n`;
+}
+
+async function main() {
+  await loadDotEnv();
+  const args = parseArgs(process.argv.slice(2), { lists: new Set(['channel']) });
+  rejectUnknown(args, new Set(['review', 'channel', 'out']));
+  if (!args.out) throw new Error('missing --out');
+  const base = process.env.MATTERMOST_URL;
+  if (!base) throw new Error('missing MATTERMOST_URL');
+  const token = process.env.MM_TOKEN_MANAGER;
+  if (!token) throw new Error('missing MM_TOKEN_MANAGER');
+  const team = process.env.MM_TEAM || 'review-room-test';
+  const wanted = await targets(args);
+  const channels = [];
+  for (const target of wanted) channels.push(await resolveChannel(base, token, team, target));
+  const service = await readServiceState();
+  const doc = {
+    test_data: true,
+    review: args.review || null,
+    channels,
+    state: service.body,
+    state_source: service.source,
+  };
+  await mkdir(args.out, { recursive: true });
+  await writeFile(path.join(args.out, 'transcript.json'), `${JSON.stringify(doc, null, 2)}\n`);
+  await writeFile(path.join(args.out, 'transcript.md'), markdown(doc));
+  const caseRoom = args.review ? channels.find((channel) => channel.name === caseRoomName(args.review)) : null;
+  if (caseRoom?.missing) {
+    throw new Error(`no room ${caseRoom.name}`);
+  }
+}
+
+main().catch((err) => {
+  console.error(err.message);
+  process.exit(1);
+});
