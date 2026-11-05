@@ -33,14 +33,16 @@ Git markdown on Nov 5 is `README.md`, this file, and `docs/agents/` (`watcher-in
 
 The window still closes Sat Nov 7 at 12:29 America/Edmonton. That time is buffer only.
 
-## Open doc findings
+## Doc findings
 
-These four items are open in this commit. The README phase of this follow-up is the fix. Do not treat them as still open after that fix lands.
+The four README and plan findings from the Nov 5 QA are fixed in this follow-up. They are not open.
 
-1. README uses team `review-room-test` for a new setup. The existing demo connects team `switch` (`MM_TEAM=switch`). Say both.
-2. README says usernames are the `*-test` accounts. Manager actions must come from the Mattermost account linked to the Switch user. `manager-test` is a setup admin, not the demo manager. On this demo the linked account is `user`. A fresh install links its own account. Agents refuse unclaimed accounts.
-3. The sample report curl lacks `Google decides. Removal is not promised.` inside `evidence_summary`.
-4. `docs/plan.md` was the Nov 4 snapshot. This file replaces it.
+1. README separates a new setup team `review-room-test` from this demo, where `MM_TEAM=switch`.
+2. README says `manager-test` is the setup admin only. On this demo, confirms, the verdict, and `approve` come from the linked account `user`. A fresh install links its own account. That username does not have to be `user`. Staff stay `sally-test`, `david-test`, `cindi-test`, and `troy-test`.
+3. The sample report `evidence_summary` includes `Google decides. Removal is not promised.` The JSON keys stay `reason`, `policy_quote`, and `evidence_summary`.
+4. This file replaced the Nov 4 snapshot.
+
+This follow-up ran `npm test` here. 19 passed and 0 failed. It also ran the README commands for both cases against `127.0.0.1:18787` with a temporary state directory. It did not use `data/state` or `.env`. It did not touch the demo box. B9, the fresh clone by another person, is still pending.
 
 ## Setup and demo rules still in force
 
