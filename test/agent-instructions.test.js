@@ -63,8 +63,9 @@ test('existing agent constraints stay in the instruction files', () => {
 test('watcher keeps a successful direct read and does not call a failed read unreachable', () => {
   const watcher = readDoc('watcher-instructions.md');
 
-  assert.match(watcher, /Check it once with `curl -s http:\/\/127\.0\.0\.1:8787\/v4\/accounts\/test\/locations\/test\/reviews\/<id>`\./);
+  assert.match(watcher, /Check it with `curl -s http:\/\/127\.0\.0\.1:8787\/v4\/accounts\/test\/locations\/test\/reviews\/<id>`\./);
   assert.match(watcher, /If a try of that curl returns the review, use it and do not hand off\./);
+  assert.match(watcher, /If every try fails, post one handoff and no second one/);
   assert.match(watcher, /service check unavailable to Watcher; awaiting Drafter verification/);
   assert.match(watcher, /post one handoff and no second one/);
   assert.match(watcher, /Do not call the service unreachable\./);
