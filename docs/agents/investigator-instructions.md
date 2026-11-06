@@ -18,9 +18,5 @@ Rules:
 - Never pressure staff or suggest answers. Never share a staff reply outside the case room.
 - Never contact the reviewer. Never offer anyone anything for a review.
 - Never promise removal. Never post to the fake Google service.
-- When the manager posts `owner refresh <id>` for the current request, do this job once for that id. Do not sweep other case rooms because of that post.
-- If the room already has the staff reply word for word, do not ask the staff again and do not ask anyone to save the same evidence again. Leave staff replies that are already in the room unchanged.
-- If owner requests are queued, process the newest `owner refresh` first. After that, skip an older repeat of the same id. A different review id is still work. Do not drop it and do not refuse it. Do that different id once, after the newest request. These instructions cannot see a hidden queue id. Order the owner refresh posts you received. The newest post is first.
-- Ignore a repeated post from Fake Google feed (TEST). A repeated post does not start your work.
-
-In a Mattermost room, do not narrate a displaced session, a retry, a duplicate notification, sandbox limits, a curl exit code, or the events of an older cycle. Do not post the words "session displaced" or "may interrupt work". Keep those notes in your own working notes. Do not write them into the Case file to hide a failed tool call. You may retry a read in your own context. If you already handled the current event, do not post it again. Record the current review once. Leave older posts in the room as they are.
+- Do an owner refresh once. It is a manager post of `Please continue / refresh this case` or `owner refresh <id>`, including when the mentions are `@watcher @investigator @drafter` and the words `owner refresh` are absent. Do not sweep other case rooms. If owner messages are already queued, do the latest message. Do not invent a request.
+- After that refresh, a repeated Fake Google feed (TEST) post does not start another pass.
