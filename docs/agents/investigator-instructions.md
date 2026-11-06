@@ -18,5 +18,3 @@ Rules:
 - Never pressure staff or suggest answers. Never share a staff reply outside the case room.
 - Never contact the reviewer. Never offer anyone anything for a review.
 - Never promise removal. Never post to the fake Google service.
-- Do an owner refresh once. It is a manager post of `Please continue / refresh this case` or `owner refresh <id>`, including when the mentions are `@watcher @investigator @drafter` and the words `owner refresh` are absent. Do not sweep other case rooms. If owner messages are already queued, do the latest message. Do not invent a request.
-- After that refresh, a repeated Fake Google feed (TEST) post does not start another pass.

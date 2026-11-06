@@ -58,53 +58,44 @@ test('drafter instructions stay the publication gate', () => {
   assert.equal(drafter.includes('no report expected'), false);
 });
 
-test('watcher posts one handoff and copies a real send', () => {
+test('a failed Watcher read stays private and step 5 waits for the sends', () => {
   const watcher = readDoc('watcher-instructions.md');
-  assert.match(watcher, /post once `I have asked Drafter to verify the current review\.`/);
+  assert.match(watcher, /record the curl result in your private working notes, not in the Case file/);
+  assert.match(watcher, /Watcher could not read the current service/);
   assert.match(watcher, /Continue the case from the feed post\./);
+  assert.match(watcher, /Do not say the service is unavailable\./);
+  assert.match(watcher, /Do not ask Drafter to repeat this read\./);
+  assert.match(watcher, /Do not call the failed read an unsupported service\./);
+  assert.match(watcher, /until Drafter has posted the successful sends for the verdict/);
+  assert.match(watcher, /stop reporting this cycle/);
+  assert.match(watcher, /Do not post a late pending result\./);
+  assert.match(watcher, /leave the current status unchanged rather than writing pending/);
+  assert.match(watcher, /Please continue \/ refresh this case/);
+  assert.match(watcher, /The first feed post still opens the room\./);
   assert.match(
     watcher,
-    /Write `Step 5 of 5: reply and report drafted` only after Drafter posts a genuine successful send/,
+    /Never repeat a displaced session, a duplicate feed, or sandbox or curl diagnostics in a user-facing room\./,
   );
-  assert.match(watcher, /A legit send shows `Sent`, `fake service accepted`, and `updateTime`\./);
-  assert.match(watcher, /A not legit send shows the reply result and the report result\./);
-  assert.match(watcher, /do not invent a result and do not add a pending line/);
-  assert.match(watcher, /Please continue \/ refresh this case/);
-  assert.match(watcher, /owner refresh <id>/);
-  assert.match(watcher, /The first feed post still opens the room\./);
-  assert.match(watcher, /Do not ask the manager for an extra phrase\./);
-  for (const banned of [
-    'awaiting Drafter verification',
-    'service unavailable',
-    'service check unavailable',
-    'Historical cycle',
-    'no report expected',
-    'sandbox',
-    'session displaced',
-    'may interrupt work',
-  ]) {
-    assert.equal(watcher.includes(banned), false, banned);
-  }
+  assert.equal(watcher.includes('I have asked Drafter'), false);
+  assert.equal(watcher.includes('fake service accepted'), false);
+  assert.equal(watcher.includes('updateTime'), false);
 });
 
-test('investigator does the posted owner message once', () => {
+test('investigator keeps the original text', () => {
   const investigator = readDoc('investigator-instructions.md');
-  assert.match(investigator, /Please continue \/ refresh this case/);
-  assert.match(investigator, /the words `owner refresh` are absent/);
-  assert.match(investigator, /Do not sweep other case rooms\./);
-  assert.match(investigator, /do the latest message/);
-  assert.match(investigator, /Do not invent a request\./);
-  assert.match(investigator, /does not start another pass/);
-  assert.equal(investigator.includes('sandbox'), false);
-  assert.equal(investigator.includes('Historical cycle'), false);
-  assert.equal(investigator.includes('session displaced'), false);
+  assert.equal(investigator.includes('Do an owner refresh once'), false);
+  assert.equal(investigator.includes('do the latest message'), false);
+  assert.equal(investigator.includes('I have asked Drafter'), false);
 });
 
-test('the room only ignores a repeated feed post', () => {
+test('the room ignores a repeated feed and a late pending line', () => {
   const room = readDoc('room-template.md');
   assert.match(room, /A repeated post from Fake Google feed \(TEST\) does not update the current cycle\./);
+  assert.match(
+    room,
+    /Do not post pending after Drafter posted this cycle accepted reply or report success\. Historical posts stay unedited\./,
+  );
   assert.equal(room.includes('Historical cycle'), false);
-  assert.equal(room.includes('sandbox'), false);
+  assert.equal(room.includes('I have asked Drafter'), false);
   assert.equal(room.includes('owner refresh'), false);
-  assert.equal(room.includes('session displaced'), false);
 });

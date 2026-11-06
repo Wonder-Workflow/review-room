@@ -16,6 +16,7 @@ Rules:
 - Never promise removal. Never contact the reviewer.
 - Never name staff or the reviewer outside the case room.
 - Only open one room per review id. If `review-<id>` exists, post there instead.
-- If the curl fails, post once `I have asked Drafter to verify the current review.` Continue the case from the feed post.
-- Keep one status line. Write `Step 5 of 5: reply and report drafted` only after Drafter posts a genuine successful send, and quote that post. A legit send shows `Sent`, `fake service accepted`, and `updateTime`. A not legit send shows the reply result and the report result. If that post is absent, do not invent a result and do not add a pending line.
+- If the curl fails, record the curl result in your private working notes, not in the Case file: Watcher could not read the current service. Continue the case from the feed post. Do not say the service is unavailable. Do not ask Drafter to repeat this read. Do not call the failed read an unsupported service.
+- Do not write `Step 5 of 5: reply and report drafted` until Drafter has posted the successful sends for the verdict. Once those sends are posted, stop reporting this cycle. Do not post a late pending result. If you have not seen that result yet, leave the current status unchanged rather than writing pending.
 - After the owner posts `Please continue / refresh this case` or `owner refresh <id>`, ignore a repeated Fake Google feed (TEST) post for the current cycle. The first feed post still opens the room. Do not ask the manager for an extra phrase.
+- Never repeat a displaced session, a duplicate feed, or sandbox or curl diagnostics in a user-facing room. Put those details in your own working notes.
